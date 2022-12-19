@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+  proxy:
+    build: ./proxy
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
+    volumes:
+      - certs:/etc/nginx/certs:ro
+      - vhost.d:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - htpasswd:/etc/nginx/htpasswd
+    networks:
+      - proxy-tier
+
+  letsencrypt-companion:
+    image: nginxproxy/acme-companion
+    restart: always
+    volumes:
+      - certs:/etc/nginx/certs
+      - acme:/etc/acme.sh
+      - vhost.d:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - proxy-tier
+    depends_on:
+      - proxy
+
+# self signed
+#  omgwtfssl:
+#    image: paulczar/omgwtfssl
+#    restart: "no"
+#    volumes:
+#      - certs:/certs
+#    environment:
+#      - SSL_SUBJECT=servhostname.local
+#      - CA_SUBJECT=my@example.com
+#      - SSL_KEY=/certs/servhostname.local.key
+#      - SSL_CSR=/certs/servhostname.local.csr
+#      - SSL_CERT=/certs/servhostname.local.crt
+#    networks:
+#      - proxy-tier
+
+volumes:
+  certs:
+  acme:
+  vhost.d:
+  html:
+  htpasswd:
+    driver_opts:
+      type: 'local'
+      o: 'bind'
+      device: ${HTPASSWD_EXTERNAL_DIR:?err}
+
+
+networks:
+  proxy-tier:
