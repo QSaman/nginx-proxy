@@ -16,7 +16,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - htpasswd:/etc/nginx/htpasswd
     networks:
-      - proxy-tier
+      - nginx-proxy-tier
 
   letsencrypt-companion:
     image: nginxproxy/acme-companion
@@ -28,7 +28,7 @@ services:
       - html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - proxy-tier
+      - nginx-proxy-tier
     depends_on:
       - proxy
 
@@ -63,5 +63,5 @@ volumes:
       device: ${VHOST_D_EXTERNAL_DIR:?err}
 
 networks:
-  proxy-tier:
+  nginx-proxy-tier:
     external: true
